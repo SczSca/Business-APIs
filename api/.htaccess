@@ -1,0 +1,15 @@
+RewriteEngine On
+RewriteRule ^tienda$ tiendas.php
+RewriteRule ^tiendas/([a-zA-Z0-9-]*)$ tiendas.php?idt=$1
+RewriteRule ^tiendas_login$ tiendas_login.php
+RewriteRule ^cliente$ clientes.php
+RewriteRule ^tienda/([a-zA-Z0-9-@.]*)/clientes/([a-zA-Z0-9-@.]*)$ clientes.php?idt=$1&idc=$2
+RewriteRule ^producto$ productos.php
+RewriteRule ^tienda/([a-zA-Z0-9-]*)/productos$ productos.php?fkt=$1
+RewriteRule ^abono$ abonos.php
+RewriteRule ^cliente/([a-zA-Z0-9-@]*)/ticket/([a-zA-Z0-9-]*)/abonos$ abonos.php?correo=$1&idt=$2
+RewriteRule ^ticket$ tickets.php
+RewriteRule ^cliente/([a-zA-Z0-9-@]*)/ticket/([a-zA-Z0-9-]*)$ tickets.php?idc=$1&idt=$2
+RewriteRule ^agregar/carritoCompra$ tickets_temp.php
+RewriteRule ^cliente/([a-zA-Z0-9-]*)/carrito$ tickets_temp.php?idc=$1
+RewriteRule ^reporte/tienda/([a-zA-Z0-9-]*)/inicio/([a-zA-Z0-9_-]*)/final/([a-zA-Z0-9_-]*)$ reportes.php?idt=$1&finicio=$2&ffinal=$3
