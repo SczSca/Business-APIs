@@ -35,6 +35,16 @@
   Permite almacenar datos de los productos guardados en un ticket temporal/carrito de compras, donde cada producto esta relacionado a un ticket temporal/carrito de compras.
   #### Views relacionados
   * [vw_detTickets_productos_temp]
+  #### Triggers relacionados
+  *[Delete_productoCantidadCarrito]
+  *[Delete_ticketTotalTemp]
+  *[Insert_detalleTicketPrecioTemp]
+  *[Insert_productoCantidadCarrito]
+  *[Update_detalleTicketPrecioTemp]
+  *[Update_productoCantidadCarrito]
+  *[Update_ticketTotalTemp]
+  *[Insert_ticketTotalTemp]
+  
 ### Abonos
   Permite almacenar los datos sobre el pago/abono de un ticket
   #### Views relacionados
