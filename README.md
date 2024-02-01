@@ -3,7 +3,14 @@
 ## Modelo de datos
 
 ![Modelo de datos Ventas](https://github.com/SczSca/Business-APIs/assets/90069772/cd5474c2-7c9a-4551-91ac-492839b8a69f)
-
+ <p align="center">
+    <a href="#readme-es">Español</a>
+    ·
+    <a href="#readme-en">English</a>
+</p>
+<a name="readme-en"></a>
+  
+  <a name="readme-es"></a>
 ### Tiendas
   Permite almacenar los datos de n tiendas, donde cada tienda tiene n clientes y n productos.
 ### Productos
