@@ -36,14 +36,14 @@
   #### Views relacionados
   * [vw_detTickets_productos_temp]
   #### Triggers relacionados
-  *[Delete_productoCantidadCarrito]
-  *[Delete_ticketTotalTemp]
-  *[Insert_detalleTicketPrecioTemp]
-  *[Insert_productoCantidadCarrito]
-  *[Update_detalleTicketPrecioTemp]
-  *[Update_productoCantidadCarrito]
-  *[Update_ticketTotalTemp]
-  *[Insert_ticketTotalTemp]
+  * [Delete_productoCantidadCarrito]
+  * [Delete_ticketTotalTemp]
+  * [Insert_detalleTicketPrecioTemp]
+  * [Insert_productoCantidadCarrito]
+  * [Update_detalleTicketPrecioTemp]
+  * [Update_productoCantidadCarrito]
+  * [Update_ticketTotalTemp]
+  * [Insert_ticketTotalTemp]
   
 ### Abonos
   Permite almacenar los datos sobre el pago/abono de un ticket
