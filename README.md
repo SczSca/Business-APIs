@@ -46,11 +46,11 @@
   Stores data of n temporal tickets, which works as a shopping cart. There is only one temporal ticket/shopping cart assigned to a client.
   #### Views relacionados
   * [vw_detTickets_productos_temp]
-### Detalles_ticket_temp
-  Permite almacenar datos de los productos guardados en un ticket temporal/carrito de compras, donde cada producto esta relacionado a un ticket temporal/carrito de compras. Stores data of the products billed on the temporal ticket/shopping cart. Each product is billed on a temporal ticket/shopping cart.
-  #### Views relacionados
+### Detalles_ticket_temp "Details_ticket_temp"
+  Stores data of the products billed on the temporal ticket/shopping cart. Each product is billed on a temporal ticket/shopping cart.
+  #### Related Views
   * [vw_detTickets_productos_temp]
-  #### Triggers relacionados
+  #### Related Triggers
   * [Delete_productoCantidadCarrito]
   * [Delete_ticketTotalTemp]
   * [Insert_detalleTicketPrecioTemp]
@@ -60,22 +60,22 @@
   * [Update_ticketTotalTemp]
   * [Insert_ticketTotalTemp]
   
-### Abonos
-  Permite almacenar los datos sobre el pago/abono de un ticket
-  #### Views relacionados
+### Abonos "Bills"
+  Stores data of a bill related to a ticket.
+  #### Related Views
   * [vw_abonos_ticket]
-  #### Triggers relacionados
+  #### Related Triggers
   * [Update_ticketCredito]
 
-### Procedimientos Almacenados
+### Stored Procedures
   * [ AbonosOtrosPlazos( f_inicioParam, condicionales, fk_tiendaParam ) ]
-    ( Lectura ) encargado de obtener y retornar todos los otros abonos realizados en otro tiempo que no se encuentra dentro del plazo especificado. Utilizado en la api de reportes
+    ( Get ) Gets and returns data of all bills done that are not within the specified period. Used in API report.
   * [ ReporteVentasProductos( f_inicioParam, f_finalParam, id_tiendaParam ) ]
-    ( Lectura ) encargado de obtener los datos de los productos facturados en los tickets del plazo especificado. Utilizado en la api de reportes
+    ( Get ) Gets and returns data of billed products on the specified tickets. Used on reportes API.
   * [ TicketsConjuntoDeIds( condicional, id_tiendaParam) ]
-    ( Lectura ) encargado de obtener los datos de los tickets que estan relacionados con los abonos del plazo especificado. Utilizado en la api de reportes.
+    ( Get ) encargado de obtener los datos de los tickets que estan relacionados con los abonos del plazo especificado. Utilizado en la api de reportes. Gets and returns data of the tickets that are related to the bills that are within the specified period.
   * [ TraspasarCarrito( id_clienteParam, id_ticketParam, id_tiendaParam) ]
-    Pasa los datos de ticket_temp y detalles_ticket_temp a un nuevo ticket y detalles_ticket_temp y elimina los registros en las tablas temporales/carrito de compras. Utilizado en la api de tickets_temp.
+    Moves the data from ticket_temp and details_ticket_temp to a new ticket and details_ticket and deletes the data from the temporal ticket/shopping cart. Used on tickets_temp API.
 
   <a name="readme-es"></a>
   
