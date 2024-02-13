@@ -22,28 +22,40 @@ switch($method) {
         
         if (isset($correo) && isset($password)) {
             // Todas las variables están definidas y puedes continuar con tu lógica aquí
-            $sqlString = "SELECT id_tienda FROM tiendas WHERE correo = '" . $correo . "' AND password = '" . $password . "'";
-            $resultado = mysqli_query($conn, $sqlString);
-            $num = mysqli_num_rows($resultado);
-            if($num > 0){
-                $r = mysqli_fetch_array($resultado);
-                
-                http_response_code(200);
-                echo json_encode(array(
-                  "error"=>false,
-                  "statusCode"=>200,
-                  "message"=>"Login con éxito",
-                  "id" => $r['id_tienda']
-                ));
-                mysqli_free_result($resultado);
+            $sqlString = "SELECT id_tienda FROM tiendas WHERE correo = ? AND password = ?";
+            $sqlPreparado = mysqli_prepare($conn, $sqlString);
+            mysqli_stmt_bind_param( $sqlPreparado, 'ss', $correo, $password);
+
+            if( mysqli_stmt_execute($sqlPreparado) ){
+                $resultado = mysqli_stmt_get_result($sqlPreparado);
+                $num = mysqli_num_rows($resultado);
+                if($num > 0){
+                    $r = mysqli_fetch_assoc($resultado);
+                    
+                    http_response_code(200);
+                    echo json_encode(array(
+                    "error"=>false,
+                    "statusCode"=>200,
+                    "message"=>"Login con éxito",
+                    "id" => $r['id_tienda']
+                    ));
+
+                    mysqli_stmt_close($sqlPreparado);
+                }else{
+                    http_response_code(400);
+                    echo json_encode(array(
+                    "error"=>true,
+                    "statusCode"=>400,
+                    "message"=>"Datos incorrectos"
+                    ));
+                }
             }else{
                 http_response_code(400);
-                echo json_encode(array(
-                  "error"=>true,
-                  "statusCode"=>400,
-                  "message"=>"Datos incorrectos"
+                echo json_encode( array(
+                    "error" => true
                 ));
             }
+
             
         } else {
             http_response_code(400);
