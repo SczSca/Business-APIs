@@ -20,12 +20,18 @@ switch($method) {
         $dataResponse = array();
 
         if($id_tienda){
-            $sqlString = "SELECT id_tienda, nombre, owner_name, owner_lastNames, logo FROM tiendas WHERE id_tienda = '".$id_tienda."'";
-            $resultado = mysqli_query($conn, $sqlString);
-            $num = mysqli_num_rows($resultado);
-            if($num > 0){
+            $sqlString = "SELECT id_tienda, nombre, owner_name, owner_lastNames, logo FROM tiendas WHERE id_tienda = ?";
+
+            $sqlPreparado = mysqli_prepare($conn, $sqlString);
+            mysqli_stmt_bind_param( $sqlPreparado, 'i', $id_tienda);
+
+            if( mysqli_stmt_execute($sqlPreparado) ){
+                $resultado = mysqli_stmt_get_result($sqlPreparado);
+                $num = mysqli_num_rows($resultado);
+                if($num > 0){
                 $r = mysqli_fetch_array($resultado);
                 $dataResponse[0] = array('id_tienda' => $r['id_tienda'], 'nombre' => $r['nombre'], 'nombre_jefe' => $r['owner_name'], 'apellidos_jefe' => $r['owner_lastNames'], 'logo_url' => $r['logo']);
+                }
             }
         }else{
             $sqlString = "SELECT id_tienda, nombre, owner_name, owner_lastNames, logo FROM tiendas";
@@ -68,8 +74,15 @@ switch($method) {
             case 'POST':
                 if (isset($nombre) && isset($correo) && isset($ownerName) && isset($ownerLastNames) && isset($password)) {
                     // Todas las variables están definidas y puedes continuar con tu lógica aquí
-                    $sqlString = "INSERT INTO tiendas(nombre,correo,owner_name,owner_lastNames,logo,password) VALUES('".$nombre."', '".$correo."', '".$ownerName."', '".$ownerLastNames."', '".$logo."', '".$password."')";
-                    $resultado = mysqli_query($conn, $sqlString);
+                    // $sqlString = "INSERT INTO tiendas(nombre,correo,owner_name,owner_lastNames,logo,password) VALUES('".$nombre."', '".$correo."', '".$ownerName."', '".$ownerLastNames."', '".$logo."', '".$password."')";
+                    $sqlString = "INSERT INTO tiendas(nombre,correo,owner_name,owner_lastNames,logo,password) VALUES(?, ?, ?, ?, ?, ?)";
+
+                    $sqlPreparado = mysqli_prepare($conn, $sqlString);
+                    mysqli_stmt_bind_param( $sqlPreparado, "ssssss", $nombre, $correo, $ownerName, $ownerLastNames, $logo, $password );
+
+                    if( mysqli_stmt_execute($sqlPreparado) ){
+                        $resultado = mysqli_stmt_get_result($sqlPreparado);
+                    
                     $num = mysqli_affected_rows($conn);
                     if($num > 0){
                         http_response_code(201);
@@ -78,7 +91,7 @@ switch($method) {
                           "statusCode"=>201,
                           "message"=>"Registro guardado"
                         ));
-                        mysqli_free_result($resultado);
+                        mysqli_stmt_close($sqlPreparado);
                     }else{
                         http_response_code(204);
                         echo json_encode(array(
@@ -86,6 +99,9 @@ switch($method) {
                           "statusCode"=>204,
                           "message"=>"No se guardo ningún registro"
                         ));
+                    }
+                    }else{
+                        
                     }
                     
                 } else {
@@ -100,8 +116,15 @@ switch($method) {
 
             case 'PUT':
                 if (isset($nombre) && isset($ownerName) && isset($ownerLastNames) ) {
-                    $sqlString = "UPDATE tiendas SET nombre = '".$nombre."', owner_name = '".$ownerName."', owner_lastNames = '".$ownerLastNames."', logo = '".$logo."' WHERE id_tienda = ".$id_tienda;
-                    $resultado = mysqli_query($conn, $sqlString);
+                    // $sqlString = "UPDATE tiendas SET nombre = '".$nombre."', owner_name = '".$ownerName."', owner_lastNames = '".$ownerLastNames."', logo = '".$logo."' WHERE id_tienda = ".$id_tienda;
+                    $sqlString = "UPDATE tiendas SET nombre = ?, owner_name = ?, owner_lastNames = ?, logo = ? WHERE id_tienda = ?";
+
+                    $sqlPreparado = mysqli_prepare($conn, $sqlString);
+                    mysqli_stmt_bind_param( $sqlPreparado, 'ssssi', $nombre, $ownerName, $ownerLastNames, $logo, $id_tienda );
+
+                    // $resultado = mysqli_query($conn, $sqlString);
+                    if( mysqli_stmt_execute($sqlPreparado) ){
+                        $resultado = mysqli_stmt_get_result($sqlPreparado);
                     $num = mysqli_affected_rows($conn);
                     if ($num > 0) {
                         http_response_code(200);
@@ -116,6 +139,14 @@ switch($method) {
                           "error"=>true,
                           "statusCode"=>400,
                           "message"=>"No se actualizó ningún registro"
+                            ));
+                        }
+                    } else{
+                        http_response_code(400);
+                        echo json_encode(array(
+                            "error"=>true,
+                            "statusCode"=>400,
+                            "message"=>"Error en consulta"
                         ));
                     }
                 } else {
@@ -130,8 +161,15 @@ switch($method) {
 
             case 'PATCH':
                 if(isset($id_tienda) && isset($correo) && isset($password)){
-                    $sqlString = "UPDATE tiendas SET correo = '".$correo."', password = '".$password."' WHERE id_tienda = ".$id_tienda;
-                    $resultado = mysqli_query($conn, $sqlString);
+                    // $sqlString = "UPDATE tiendas SET correo = '".$correo."', password = '".$password."' WHERE id_tienda = ".$id_tienda;
+                    $sqlString = "UPDATE tiendas SET correo = ?, password = ? WHERE id_tienda = ?";
+
+                    $sqlPreparado = mysqli_prepare($conn, $sqlString);
+                    mysqli_stmt_bind_param( $sqlPreparado, 'ssi', $correo, $password, $id_tienda );
+
+                    if( mysqli_stmt_execute($sqlPreparado) ){
+                        $resultado = mysqli_stmt_get_result($sqlPreparado);
+
                     $num = mysqli_affected_rows($conn);
                     if ($num > 0) {
                         http_response_code(200);
@@ -148,6 +186,7 @@ switch($method) {
                           "message"=>"No se actualizó ninguna credencial"
                         ));
                     }
+                    }
                 } else{
                     http_response_code(400);
                     echo json_encode(array(
@@ -160,8 +199,16 @@ switch($method) {
             
             case 'DELETE':
                 if(isset($id_tienda)){
-                    $sqlString = "DELETE FROM tiendas WHERE id_tienda = ".$id_tienda;
-                    $resultado = mysqli_query($conn, $sqlString);
+                    // $sqlString = "DELETE FROM tiendas WHERE id_tienda = ".$id_tienda;
+
+                    $sqlString = "DELETE FROM tiendas WHERE id_tienda = ?";
+
+                    $sqlPreparado = mysqli_prepare($conn, $sqlString);
+                    mysqli_stmt_bind_param( $sqlPreparado, 'i', $id_tienda);
+
+                    // $resultado = mysqli_query($conn, $sqlString);
+
+                    if( mysqli_stmt_execute($sqlPreparado) ){
                     $num = mysqli_affected_rows($conn);
                     if ($num > 0) {
                         http_response_code(200);
@@ -176,6 +223,14 @@ switch($method) {
                           "error"=>true,
                           "statusCode"=>400,
                           "message"=>"No se borró la tienda"
+                        ));
+                    }
+                    }else{
+                        http_response_code(400);
+                        echo json_encode(array(
+                          "error"=>true,
+                          "statusCode"=>400,
+                          "message"=>"Error en la consulta"
                         ));
                     }
                 } else{
@@ -203,8 +258,15 @@ switch($method) {
         $logo = isset($data->logo_url) ? $data->logo_url : NULL;
 
         if (isset($nombre) && isset($ownerName) && isset($ownerLastNames) ) {
-            $sqlString = "UPDATE tiendas SET nombre = '".$nombre."' AND owner_name = '".$ownerName."' AND owner_lastNames = '".$ownerLastNames."' AND logo = '".$logo."'";
-            $resultado = mysqli_query($conn, $sqlString);
+            // $sqlString = "UPDATE tiendas SET nombre = '".$nombre."', owner_name = '".$ownerName."', owner_lastNames = '".$ownerLastNames."', logo = '".$logo."' WHERE id_tienda = ".$id_tienda;
+            $sqlString = "UPDATE tiendas SET nombre = ?, owner_name = ?, owner_lastNames = ?, logo = ? WHERE id_tienda = ?";
+
+            $sqlPreparado = mysqli_prepare($conn, $sqlString);
+            mysqli_stmt_bind_param( $sqlPreparado, 'ssssi', $nombre, $ownerName, $ownerLastNames, $logo, $id_tienda );
+
+            // $resultado = mysqli_query($conn, $sqlString);
+            if( mysqli_stmt_execute($sqlPreparado) ){
+                $resultado = mysqli_stmt_get_result($sqlPreparado);
             $num = mysqli_affected_rows($conn);
             if ($num > 0) {
                 http_response_code(200);
@@ -214,11 +276,19 @@ switch($method) {
                     "message"=> "Registro actualizado"
                 ));
             }else{
-                http_response_code(204);
+                http_response_code(400);
                 echo json_encode(array(
                   "error"=>true,
-                  "statusCode"=>204,
+                  "statusCode"=>400,
                   "message"=>"No se actualizó ningún registro"
+                    ));
+                }
+            } else{
+                http_response_code(400);
+                echo json_encode(array(
+                    "error"=>true,
+                    "statusCode"=>400,
+                    "message"=>"Error en consulta"
                 ));
             }
         } else {
@@ -232,6 +302,12 @@ switch($method) {
     break;
 
     case 'PATCH':
+        $json = file_get_contents('php://input');
+        $data = json_decode($json);
+        $id_tienda = isset($data->id_tienda) ? $data->id_tienda : NULL;
+        $correo = isset($data->correo) ? $data->correo : NULL;
+        $password = isset($data->password) ? $data->password : NULL;
+
         if(isset($id_tienda) && isset($correo) && isset($password)){
             $sqlString = "UPDATE tiendas SET correo = '".$correo."', password = '".$password."' WHERE id_tienda = ".$id_tienda;
             $resultado = mysqli_query($conn, $sqlString);
@@ -262,6 +338,10 @@ switch($method) {
     break;
     
     case 'DELETE':
+        $json = file_get_contents('php://input');
+        $data = json_decode($json);
+        $id_tienda = isset($data->id_tienda) ? $data->id_tienda : NULL;
+
         if(isset($id_tienda)){
             $sqlString = "DELETE FROM tiendas WHERE id_tienda = ".$id_tienda;
             $resultado = mysqli_query($conn, $sqlString);
