@@ -29,8 +29,8 @@ switch($method) {
                 $resultado = mysqli_stmt_get_result($sqlPreparado);
                 $num = mysqli_num_rows($resultado);
                 if($num > 0){
-                $r = mysqli_fetch_array($resultado);
-                $dataResponse[0] = array('id_tienda' => $r['id_tienda'], 'nombre' => $r['nombre'], 'nombre_jefe' => $r['owner_name'], 'apellidos_jefe' => $r['owner_lastNames'], 'logo_url' => $r['logo']);
+                    $r = mysqli_fetch_array($resultado);
+                    $dataResponse[0] = array('id_tienda' => $r['id_tienda'], 'nombre' => $r['nombre'], 'nombre_jefe' => $r['owner_name'], 'apellidos_jefe' => $r['owner_lastNames'], 'logo_url' => $r['logo']);
                 }
             }
         }else{
@@ -40,10 +40,9 @@ switch($method) {
             if($num > 0){
                 $c = 0;
                 while($r = mysqli_fetch_array($resultado)){
-                    $temp[$c] = array('id_tienda' => $r['id_tienda'], 'nombre' => $r['nombre'], 'nombre_jefe' => $r['owner_name'], 'apellidos_jefe' => $r['owner_lastNames'], 'logo_url' => $r['logo']);
-                    $c++;
+                    $temp[] = array('id_tienda' => $r['id_tienda'], 'nombre' => $r['nombre'], 'nombre_jefe' => $r['owner_name'], 'apellidos_jefe' => $r['owner_lastNames'], 'logo_url' => $r['logo']);
                 }
-                $dataResponse = array_merge($dataResponse, $temp);
+                $dataResponse = $temp;
             }
         }
         http_response_code(200);
@@ -83,25 +82,26 @@ switch($method) {
                     if( mysqli_stmt_execute($sqlPreparado) ){
                         $resultado = mysqli_stmt_get_result($sqlPreparado);
                     
-                    $num = mysqli_affected_rows($conn);
-                    if($num > 0){
-                        http_response_code(201);
-                        echo json_encode(array(
-                          "error"=>false,
-                          "statusCode"=>201,
-                          "message"=>"Registro guardado"
-                        ));
-                        mysqli_stmt_close($sqlPreparado);
+                        $num = mysqli_affected_rows($conn);
+                        if($num > 0){
+                            http_response_code(201);
+                            echo json_encode(array(
+                                "error"=>false,
+                                "statusCode"=>201,
+                                "message"=>"Registro guardado"
+                                ));
+                            
+                            mysqli_stmt_close($sqlPreparado);
+                        }else{
+                            http_response_code(204);
+                            echo json_encode(array(
+                                "error"=>true,
+                                "statusCode"=>204,
+                                "message"=>"No se guardo ningún registro"
+                            ));
+                        }
                     }else{
-                        http_response_code(204);
-                        echo json_encode(array(
-                          "error"=>true,
-                          "statusCode"=>204,
-                          "message"=>"No se guardo ningún registro"
-                        ));
-                    }
-                    }else{
-                        
+
                     }
                     
                 } else {
@@ -125,20 +125,20 @@ switch($method) {
                     // $resultado = mysqli_query($conn, $sqlString);
                     if( mysqli_stmt_execute($sqlPreparado) ){
                         $resultado = mysqli_stmt_get_result($sqlPreparado);
-                    $num = mysqli_affected_rows($conn);
-                    if ($num > 0) {
-                        http_response_code(200);
-                        echo json_encode(array(
-                            "error"=> false,
-                            "statusCode"=> 200,
-                            "message"=> "Registro actualizado"
-                        ));
-                    }else{
-                        http_response_code(400);
-                        echo json_encode(array(
-                          "error"=>true,
-                          "statusCode"=>400,
-                          "message"=>"No se actualizó ningún registro"
+                        $num = mysqli_affected_rows($conn);
+                        if ($num > 0) {
+                            http_response_code(200);
+                            echo json_encode(array(
+                                "error"=> false,
+                                "statusCode"=> 200,
+                                "message"=> "Registro actualizado"
+                            ));
+                        }else{
+                            http_response_code(400);
+                            echo json_encode(array(
+                            "error"=>true,
+                            "statusCode"=>400,
+                            "message"=>"No se actualizó ningún registro"
                             ));
                         }
                     } else{
@@ -170,22 +170,22 @@ switch($method) {
                     if( mysqli_stmt_execute($sqlPreparado) ){
                         $resultado = mysqli_stmt_get_result($sqlPreparado);
 
-                    $num = mysqli_affected_rows($conn);
-                    if ($num > 0) {
-                        http_response_code(200);
-                        echo json_encode(array(
-                            "error"=> false,
-                            "statusCode"=> 200,
-                            "message"=> "credenciales actualizadas"
-                        ));
-                    }else{
-                        http_response_code(400);
-                        echo json_encode(array(
-                          "error"=>true,
-                          "statusCode"=>400,
-                          "message"=>"No se actualizó ninguna credencial"
-                        ));
-                    }
+                        $num = mysqli_affected_rows($conn);
+                        if ($num > 0) {
+                            http_response_code(200);
+                            echo json_encode(array(
+                                "error"=> false,
+                                "statusCode"=> 200,
+                                "message"=> "credenciales actualizadas"
+                            ));
+                        }else{
+                            http_response_code(400);
+                            echo json_encode(array(
+                            "error"=>true,
+                            "statusCode"=>400,
+                            "message"=>"No se actualizó ninguna credencial"
+                            ));
+                        }
                     }
                 } else{
                     http_response_code(400);
@@ -209,22 +209,22 @@ switch($method) {
                     // $resultado = mysqli_query($conn, $sqlString);
 
                     if( mysqli_stmt_execute($sqlPreparado) ){
-                    $num = mysqli_affected_rows($conn);
-                    if ($num > 0) {
-                        http_response_code(200);
-                        echo json_encode(array(
-                            "error"=> false,
-                            "statusCode"=> 200,
-                            "message"=> "tienda borrada"
-                        ));
-                    }else{
-                        http_response_code(400);
-                        echo json_encode(array(
-                          "error"=>true,
-                          "statusCode"=>400,
-                          "message"=>"No se borró la tienda"
-                        ));
-                    }
+                        $num = mysqli_affected_rows($conn);
+                        if ($num > 0) {
+                            http_response_code(200);
+                            echo json_encode(array(
+                                "error"=> false,
+                                "statusCode"=> 200,
+                                "message"=> "tienda borrada"
+                            ));
+                        }else{
+                            http_response_code(400);
+                            echo json_encode(array(
+                                "error"=>true,
+                                "statusCode"=>400,
+                                "message"=>"No se borró la tienda"
+                            ));
+                        }
                     }else{
                         http_response_code(400);
                         echo json_encode(array(
