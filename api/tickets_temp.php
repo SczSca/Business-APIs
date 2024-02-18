@@ -24,9 +24,17 @@ switch($method) {
         $detallesTicket = array();
 
         if($id_cliente){
-            $condicional = "fk_cliente = ".$id_cliente;
+            // $condicional = "fk_cliente = ".$id_cliente;
+            // $sqlString = "SELECT * FROM tickets_temp WHERE ".$condicional;
+            $condicional = "fk_cliente = ?";
             $sqlString = "SELECT * FROM tickets_temp WHERE ".$condicional;
-            $resultado = mysqli_query($conn, $sqlString);
+
+            $sqlPreparado = mysqli_prepare($conn,$sqlString);
+            mysqli_stmt_bind_param($sqlPreparado, "i", $id_cliente);
+
+            // $resultado = mysqli_query($conn, $sqlString);
+            if( mysqli_stmt_execute($sqlPreparado) ){
+                $resultado = mysqli_stmt_get_result($sqlPreparado);
             $num = mysqli_num_rows($resultado);
             if($num > 0){
                 $r = mysqli_fetch_array($resultado);
@@ -49,7 +57,7 @@ switch($method) {
                 $dataResponse = $tickets;
                 $tickets = $temp = null;
 
-                
+            }   
             }
             http_response_code(200);
                 echo json_encode(array(
@@ -58,6 +66,7 @@ switch($method) {
                     "message"=>"OK",
                     "data"=>$dataResponse
                 ));
+                mysqli_stmt_close($sqlPreparado);
         }else{
             http_response_code(400);
             echo json_encode(array(
@@ -85,8 +94,14 @@ switch($method) {
             case 'POST':
                 if ($fk_cliente && $cantidad && $fk_producto) {
                     // Todas las variables están definidas y puedes continuar con tu lógica aquí
-                    $sqlString = "SELECT id_ticket FROM tickets_temp WHERE fk_cliente = ".$fk_cliente;
-                    $resultado = mysqli_query($conn, $sqlString);
+                    // $sqlString = "SELECT id_ticket FROM tickets_temp WHERE fk_cliente = ".$fk_cliente;
+                    $sqlString = "SELECT id_ticket FROM tickets_temp WHERE fk_cliente = ?";
+                    
+                    $sqlPreparado = mysqli_prepare($conn, $sqlString);
+                    mysqli_stmt_bind_param($sqlPreparado, "i", $fk_cliente);
+                    // $resultado = mysqli_query($conn, $sqlString);
+                    if( mysqli_stmt_execute($sqlPreparado) ){
+                        $resultado = mysqli_stmt_get_result($sqlPreparado);
                     $num = mysqli_num_rows($resultado);
                     if ($num){
                         $r = mysqli_fetch_array($resultado);
@@ -95,10 +110,17 @@ switch($method) {
                         insert_detallesTicket($conn, $id_ticket, $fk_producto, $cantidad); 
 
                     }else{
-                        $sqlString = "INSERT INTO tickets_temp(fk_cliente) VALUES(".$fk_cliente.")";
-                        $resultado = mysqli_query($conn, $sqlString);
+                        // $sqlString = "INSERT INTO tickets_temp(fk_cliente) VALUES(".$fk_cliente.")";
+                        $sqlString = "INSERT INTO tickets_temp(fk_cliente) VALUES(?)";
+                        $sqlPreparado = mysqli_prepare( $conn, $sqlString );
+                        mysqli_stmt_bind_param( $sqlPreparado, "i", $fk_cliente );
+
+                        // $resultado = mysqli_query($conn, $sqlString);
+                        if( mysqli_stmt_execute($sqlPreparado) ){ 
                         $num = mysqli_insert_id($conn);
+                        
                         if ($num){
+                            
                             //func que retorna un http response 201 o 400
                             insert_detallesTicket($conn, $num, $fk_producto, $cantidad);
 
@@ -110,6 +132,9 @@ switch($method) {
                             "message"=>"Problemas al crear ticket"
                             ));
                         }
+                        mysqli_stmt_close($sqlPreparado);
+                    }
+                    }
                     }
                 } else {
                     http_response_code(400);
@@ -132,9 +157,16 @@ switch($method) {
 
             case 'PATCH':
                 if($cantidad && $fk_producto && $id_ticket){
-                    $condicional = "fk_ticket = ".$id_ticket." AND fk_producto = ".$fk_producto;
-                    $sqlString = "UPDATE detalles_ticket_temp SET cantidad = ".$cantidad." WHERE ".$condicional;
-                    $resultado = mysqli_query($conn, $sqlString);
+                    // $condicional = "fk_ticket = ".$id_ticket." AND fk_producto = ".$fk_producto;
+                    // $sqlString = "UPDATE detalles_ticket_temp SET cantidad = ".$cantidad." WHERE ".$condicional;
+                    $condicional = "fk_ticket = ? AND fk_producto = ?";
+                    $sqlString = "UPDATE detalles_ticket_temp SET cantidad = ? WHERE fk_ticket = ? AND fk_producto = ?";
+                    $sqlPreparado = mysqli_prepare($conn, $sqlString);
+                    mysqli_stmt_bind_param( $sqlPreparado, "iii", $cantidad, $id_ticket, $fk_producto);
+
+                    // $resultado = mysqli_query($conn, $sqlString);
+                    if( mysqli_stmt_execute($sqlPreparado) ){
+                        $resultado = mysqli_stmt_get_result($sqlPreparado);
                     $num = mysqli_affected_rows($conn);
                     if ($num){
                         http_response_code(200);
@@ -151,14 +183,22 @@ switch($method) {
                           "message"=>"No se pudo realizar el cambio de la cantidad"
                         ));
                     }
+                    mysqli_stmt_close($sqlPreparado);
+                    }
                 }
             break;
             
             case 'DELETE':
                 if($id_ticket && $fk_producto){
-                    $condicional = "fk_ticket = ".$id_ticket." AND fk_producto = ".$fk_producto;
+                    // $condicional = "fk_ticket = ".$id_ticket." AND fk_producto = ".$fk_producto;
+                    // $sqlString = "DELETE FROM detalles_ticket_temp WHERE ".$condicional;
+                    $condicional = "fk_ticket = ? AND fk_producto = ?";
                     $sqlString = "DELETE FROM detalles_ticket_temp WHERE ".$condicional;
-                    $resultado = mysqli_query($conn, $sqlString);
+                    $sqlPreparado = mysqli_prepare( $conn, $sqlString);
+                    mysqli_stmt_bind_param( $sqlPreparado, "ii", $id_ticket, $fk_producto );
+
+                    // $resultado = mysqli_query($conn, $sqlString);
+                    if( mysqli_stmt_execute($sqlPreparado) ){
                     $num = mysqli_affected_rows($conn);
                     if ($num > 0) {
                         http_response_code(200);
@@ -174,6 +214,7 @@ switch($method) {
                           "statusCode"=>400,
                           "message"=>"No se borró el producto del ticket"
                         ));
+                    }
                     }
                 } else{
                     http_response_code(400);
@@ -275,8 +316,13 @@ switch($method) {
 }
 mysqli_close($conn);
 function insert_detallesTicket($conn, $id_ticket, $fk_producto, $cantidad){
-    $sqlString = "INSERT INTO detalles_ticket_temp(fk_ticket, fk_producto, cantidad) VALUES(".$id_ticket.", ".$fk_producto.", ".$cantidad.")";
-    $resultado = mysqli_query($conn, $sqlString);
+    // $sqlString = "INSERT INTO detalles_ticket_temp(fk_ticket, fk_producto, cantidad) VALUES(".$id_ticket.", ".$fk_producto.", ".$cantidad.")";
+    $sqlString = "INSERT INTO detalles_ticket_temp(fk_ticket, fk_producto, cantidad) VALUES(?, ?, ?)";
+    $sqlPreparado = mysqli_prepare( $conn, $sqlString );
+    mysqli_stmt_bind_param( $sqlPreparado, "iii", $id_ticket, $fk_producto, $cantidad );
+
+    if( mysqli_stmt_execute($sqlPreparado) ){
+    // $resultado = mysqli_query($conn, $sqlString);
     $num = mysqli_affected_rows($conn);
     if ($num){
         http_response_code(201);
@@ -292,6 +338,7 @@ function insert_detallesTicket($conn, $id_ticket, $fk_producto, $cantidad){
             "statusCode"=>400,
             "message"=>"problemas al guardar el producto"
         ));
+    }
     }
 }
 ?>
