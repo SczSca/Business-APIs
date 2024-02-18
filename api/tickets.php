@@ -15,23 +15,42 @@ $method = $_SERVER['REQUEST_METHOD'];
 
 switch($method) {
     case 'GET':
-        $fk_cliente = isset($_GET['idc']) ? $_GET['idc'] : NULL;
-        $id_ticket = isset($_GET['idt']) ? $_GET['idt'] : NULL;
+        $id_cliente = isset($_GET['idc']) ? $_GET['idc'] : NULL;
+        $id_tienda = isset($_GET['idt']) ? $_GET['idt'] : NULL;
         
         $temp;
         $dataResponse = array();
         $tickets = array();
         $detallesTicket = array();
+        $types = "";
+        $params = array();
 
-        if($fk_cliente && isset($id_ticket)){
-            $condicional = $id_ticket == 0 ? "fk_cliente LIKE '%".$fk_cliente."%'" : "fk_cliente LIKE '%".$fk_cliente."%' AND id_ticket = ".$id_ticket;
-            $sqlString = "SELECT id_ticket, fecha, cantidad, credito, estado FROM vw_ticket_cliente WHERE ".$condicional;
-            $resultado = mysqli_query($conn, $sqlString);
+        if(isset($id_cliente) && isset($id_tienda)){
+            $types = "i";
+            $params[] = $id_tienda;
+
+            $sqlString = "SELECT id_ticket, fecha, total, credito, nombre_completo, estado FROM vw_ticket_cliente WHERE fk_tienda = ?";
+            if( $id_cliente > 0 ){
+                $sqlString .= " AND id_cliente = ?";
+                $types .= "i";
+                $params[] = $id_cliente;
+            }
+            // $condicional_cliente = $id_cliente == 0 ? "" : " AND fk_cliente = ?";
+            //$condicional = $id_tienda == 0 ? $condicional_cliente : $condicional_cliente." AND fk_tienda = ".$id_tienda;
+            
+
+            $sqlPreparado = mysqli_prepare($conn, $sqlString);
+            $bind_params = array_merge(array($sqlPreparado, $types), $params);
+            call_user_func_array('mysqli_stmt_bind_param', $bind_params);
+            // mysqli_stmt_bind_param( $sqlPreparado, $types, $id_tienda, $id_cliente );
+            // $resultado = mysqli_query($conn, $sqlString);
+            if( mysqli_stmt_execute($sqlPreparado) ){
+                $resultado = mysqli_stmt_get_result($sqlPreparado);
             $num = mysqli_num_rows($resultado);
             if($num > 0){
                 $c = 0;
                 while($r = mysqli_fetch_array($resultado)){
-                    $temp[$c] = array('id_ticket' => $r['id_ticket'], 'fecha' => $r['fecha'], 'cantidad' => $r['cantidad'], 'credito' => $r['credito'], 'estado' => $r['estado']);
+                    $temp[$c] = array('id_ticket' => $r['id_ticket'], 'fecha' => $r['fecha'], 'total' => $r['total'], 'credito' => $r['credito'], 'nombre_completo' => $r['nombre_completo'], 'estado' => $r['estado']);
                     $c++;
                 }
                 $tickets = array_merge($tickets, $temp);
@@ -41,12 +60,12 @@ switch($method) {
                     $c = 0;
                     $temp = array();
                     
-                    $condicional = "id_ticket = ".$tickets[$i]["id_ticket"];
+                    $condicional = "fk_ticket = ".$tickets[$i]["id_ticket"];
                     $sqlString = "SELECT * FROM vw_detTickets_productos WHERE ".$condicional;
                     $resultado = mysqli_query($conn, $sqlString);
                     $num = mysqli_num_rows($resultado);
                     while( $r = mysqli_fetch_array($resultado)){
-                        $temp[$c] = array('id_detallesTicket' => $r['id_detallesTicket'], 'id_ticket' => $r['id_ticket'],'fk_producto' => $r['fk_producto'], 'nombre' => $r['nombre'], 'precio' => $r['precio'], 'cantidad' => $r['cantidad'], 'url_img' => $r['url_img']);
+                        $temp[$c] = array('id_detallesTicket' => $r['id_detallesTicket'], 'id_ticket' => $r['fk_ticket'],'fk_producto' => $r['fk_producto'], 'nombre' => $r['nombre'], 'precio' => $r['precio'], 'cantidad' => $r['cantidad'], 'url_img' => $r['url_img']);
                         $c++;
                     }
                     $tickets[ $i ]['detallesTicket'] = $temp;
@@ -55,16 +74,16 @@ switch($method) {
                 $dataResponse = $tickets;
                 $tickets = $temp = null;
 
-                http_response_code(200);
-                echo json_encode(array(
-                    "error"=>false,
-                    "statusCode"=>200,
-                    "message"=>"OK",
-                    "data"=>$dataResponse
-                ));
+                
             }
-        }else if(0){
-
+            http_response_code(200);
+            echo json_encode(array(
+                "error"=>false,
+                "statusCode"=>200,
+                "message"=>"OK",
+                "data"=>$dataResponse
+            ));
+            }
         }else{
             http_response_code(400);
             echo json_encode(array(
@@ -90,13 +109,18 @@ switch($method) {
 
         switch ($operacion) {
             
-            
             case 'POST':
                 if ($fk_cliente && $id_ticket && $fk_tienda ) {
                     // Todas las variables están definidas y puedes continuar con tu lógica aquí
                     $dataResponse = "Se realizó correctamente";
-                    $sqlString = "CALL TraspasarCarrito(".$fk_cliente.", ".$id_ticket.", ".$fk_tienda.")";
-                    $resultado = mysqli_query($conn, $sqlString);
+                    // $sqlString = "CALL TraspasarCarrito(".$fk_cliente.", ".$id_ticket.", ".$fk_tienda.")";
+                    $sqlString = "CALL TraspasarCarrito( ? , ? , ? )";
+                    
+                    $sqlPreparado = mysqli_prepare( $conn, $sqlString );
+                    mysqli_stmt_bind_param( $sqlPreparado, "iii", $fk_cliente, $id_ticket, $fk_tienda );
+
+                    // $resultado = mysqli_query($conn, $sqlString);
+                    if( mysqli_stmt_execute($sqlPreparado) ){
                     $num = mysqli_num_rows($resultado);
                     if($num){
                         $r = mysqli_fetch_array($resultado);
@@ -109,7 +133,7 @@ switch($method) {
                         "statusCode"=> 200,
                         "message"=> $dataResponse
                     ));
-                    
+                    }   
                 } else {
                     http_response_code(400);
                     echo json_encode(array(
@@ -140,8 +164,12 @@ switch($method) {
             
             case 'DELETE':
                 if(isset($id_ticket)){
-                    $sqlString = "DELETE FROM tickets WHERE id_ticket = ".$id_ticket;
-                    $resultado = mysqli_query($conn, $sqlString);
+                    // $sqlString = "DELETE FROM tickets WHERE id_ticket = ".$id_ticket;
+                    $sqlString = "DELETE FROM tickets WHERE id_ticket = ?";
+                    $sqlPreparado = mysqli_prepare( $conn, $sqlString );
+                    mysqli_stmt_bind_param( $sqlPreparado, "i", $id_ticket);
+                    // $resultado = mysqli_query($conn, $sqlString);
+                    if( mysqli_stmt_execute($sqlPreparado) ){
                     $num = mysqli_affected_rows($conn);
                     if ($num > 0) {
                         http_response_code(200);
@@ -157,6 +185,7 @@ switch($method) {
                           "statusCode"=>400,
                           "message"=>"No se borró el ticket"
                         ));
+                    }
                     }
                 } else{
                     http_response_code(400);
@@ -202,8 +231,12 @@ switch($method) {
     
     case 'DELETE':
         if(isset($id_ticket)){
-            $sqlString = "DELETE FROM tickets WHERE id_ticket = ".$id_ticket;
-            $resultado = mysqli_query($conn, $sqlString);
+            // $sqlString = "DELETE FROM tickets WHERE id_ticket = ".$id_ticket;
+            $sqlString = "DELETE FROM tickets WHERE id_ticket = ?";
+            $sqlPreparado = mysqli_prepare( $conn, $sqlString );
+            mysqli_stmt_bind_param( $sqlPreparado, "i", $id_ticket);
+            // $resultado = mysqli_query($conn, $sqlString);
+            if( mysqli_stmt_execute($sqlPreparado) ){
             $num = mysqli_affected_rows($conn);
             if ($num > 0) {
                 http_response_code(200);
@@ -219,6 +252,7 @@ switch($method) {
                   "statusCode"=>400,
                   "message"=>"No se borró el ticket"
                 ));
+            }
             }
         } else{
             http_response_code(400);
